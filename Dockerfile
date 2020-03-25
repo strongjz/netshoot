@@ -61,6 +61,10 @@ RUN wget https://github.com/bcicen/ctop/releases/download/v0.7.1/ctop-0.7.1-linu
 ARG CALICOCTL_VERSION=v3.3.1
 RUN wget https://github.com/projectcalico/calicoctl/releases/download/${CALICOCTL_VERSION}/calicoctl && chmod +x calicoctl && mv calicoctl /usr/local/bin
 
+# Installing coreDNS
+ADD https://github.com/coredns/coredns/releases/download/v1.6.9/coredns_1.6.9_linux_arm64.tgz /coredns.tgz
+RUN tar -xzvf /coredns.tgz && rm -f /coredns.tgz
+
 # Settings
 ADD motd /etc/motd
 ADD profile  /etc/profile
