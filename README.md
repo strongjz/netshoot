@@ -9,23 +9,38 @@
 dP    dP `88888P'   dP   `88888P' dP    dP `88888P' `88888P'   dP
 ```
 
-**Purpose:** Docker and Kubernetes network troubleshooting can become complex. With proper understanding of how Docker and Kubernetes networking works and the right set of tools, you can troubleshoot and resolve these networking issues. The `netshoot` container has a set of powerful networking tshooting tools that can be used to troubleshoot Docker networking issues. Along with these tools come a set of use-cases that show how this container can be used in real-world scenarios.
+**Purpose:** Docker and Kubernetes network troubleshooting can become complex. With proper understanding of how Docker 
+and Kubernetes networking works and the right set of tools, you can troubleshoot and resolve these networking issues. 
+The `netshoot` container has a set of powerful networking tshooting tools that can be used to troubleshoot Docker 
+networking issues. Along with these tools come a set of use-cases that show how this container can be used in real-world
+scenarios.
 
-**Network Namespaces:** Before starting to use this tool, it's important to go over one key topic: **Network Namespaces**. Network namespaces provide isolation of the system resources associated with networking. Docker uses network and other type of namespaces (`pid`,`mount`,`user`..etc) to create an isolated environment for each container. Everything from interfaces, routes, and IPs is completely isolated within the network namespace of the container. 
+**Network Namespaces:** Before starting to use this tool, it's important to go over one key topic: **Network Namespaces**. 
+Network namespaces provide isolation of the system resources associated with networking. Docker uses network and other 
+type of namespaces (`pid`,`mount`,`user`..etc) to create an isolated environment for each container. Everything from 
+interfaces, routes, and IPs is completely isolated within the network namespace of the container. 
 
-Kubernetes also uses network namespaces. Kubelets creates a network namespace per pod where all containers in that pod share that same network namespace (eths,IP, tcp sockets...etc). This is a key difference between Docker containers and Kubernetes pods.
+Kubernetes also uses network namespaces. Kubelets creates a network namespace per pod where all containers in that pod 
+share that same network namespace (eths,IP, tcp sockets...etc). This is a key difference between Docker containers and 
+Kubernetes pods.
 
-Cool thing about namespaces is that you can switch between them. You can enter a different container's network namespace, perform some troubleshooting on its network's stack with tools that aren't even installed on that container. Additionally, `netshoot` can be used to troubleshoot the host itself by using the host's network namespace. This allows you to perform any troubleshooting without installing any new packages directly on the host or your application's package. 
+Cool thing about namespaces is that you can switch between them. You can enter a different container's network namespace, 
+perform some troubleshooting on its network's stack with tools that aren't even installed on that container. Additionally, 
+`netshoot` can be used to troubleshoot the host itself by using the host's network namespace. This allows you to perform 
+any troubleshooting without installing any new packages directly on the host or your application's package. 
 
-* **Container's Network Namespace:** If you're having networking issues with your application's container, you can launch `netshoot` with that container's network namespace like this :
+* **Container's Network Namespace:** If you're having networking issues with your application's container, you can 
+launch `netshoot` with that container's network namespace like this :
 
 `$ docker run -it --net container:<container_name> nicolaka/netshoot`
 
-* **Host's Network Namespace:** If you think the networking issue is on the host itself, you can launch `netshoot` with that host's network namespace. This is how:
+* **Host's Network Namespace:** If you think the networking issue is on the host itself, you can launch `netshoot` with 
+that host's network namespace. This is how:
  
 `$ docker run -it --net host nicolaka/netshoot`
 
-* **Network's Network Namespace:** If you want to troubleshoot a Docker network, you can enter the network's namespace using `nsenter`. This is explained in the `nsenter` section below.
+* **Network's Network Namespace:** If you want to troubleshoot a Docker network, you can enter the network's namespace 
+using `nsenter`. This is explained in the `nsenter` section below.
 
 **Kubernetes**
 
@@ -39,7 +54,9 @@ And if you want to spin up a container on the host's network namespace.
 
 **Network Problems** 
 
-Many network issues could result in application performance degradation. Some of those issues could be related to the underlying networking infrastructure(underlay). Others could be related to misconfiguration at the host or Docker level. Let's take a look at common networking issues:
+Many network issues could result in application performance degradation. Some of those issues could be related to the 
+underlying networking infrastructure(underlay). Others could be related to misconfiguration at the host or Docker level. 
+Let's take a look at common networking issues:
 
 * latency
 * routing 
@@ -100,21 +117,31 @@ To troubleshoot these issues, `netshoot` includes a set of powerful tools as rec
     vim
 
 ## **Docker EE 2.0 + Kubernetes Use Cases:** 
-Here's a list of use-cases that can help you understand when and how to use this container to solve networking issues in your Docker cluster. Please feel free to add your own use-case where you used `netshoot` to investigate, trouble-shoot, or just learn more about your environment!!!
+Here's a list of use-cases that can help you understand when and how to use this container to solve networking issues 
+in your Docker cluster. Please feel free to add your own use-case where you used `netshoot` to investigate, trouble-shoot, 
+or just learn more about your environment!!!
 
 
 ## Managing Kubernetes Calico CNI with calicoctl
 
-In Docker Enterprise Edition, and in so many Kubernetes-based solutions, [Calico](https://www.projectcalico.org/) is used as the default CNI plugin of choice. This means that all the pod networking related resources ( IP assignment, routing, network policies, etc..) is handled by Calico. [calicoctl](https://github.com/projectcalico/calicoctl) is a cli tool to makes it easy to manage Calico network and security policy, as well as other Calico configurations. The calicoctl tool talks directly to `etcd`, so it's often not possible or recommended to expose etcd outside of the Kubernetes cluster. A recommended way to use calicoctl is to run it on a the master node inside the cluster. 
+In Docker Enterprise Edition, and in so many Kubernetes-based solutions, [Calico](https://www.projectcalico.org/) is 
+used as the default CNI plugin of choice. This means that all the pod networking related resources ( IP assignment, 
+routing, network policies, etc..) is handled by Calico. [calicoctl](https://github.com/projectcalico/calicoctl) is a cli 
+tool to makes it easy to manage Calico network and security policy, as well as other Calico configurations. 
+The calicoctl tool talks directly to `etcd`, so it's often not possible or recommended to expose etcd outside of the 
+Kubernetes cluster. A recommended way to use calicoctl is to run it on a the master node inside the cluster. 
 
-Assuming you are running Docker EE 2.0 (although this should work on any Kuberenetes cluster with Calico installed), run the `netshoot` as a deployment using [this deployment](configs/netshoot-calico.yaml). This deployment will use the `kube-system` namespace.
+Assuming you are running Docker EE 2.0 (although this should work on any Kuberenetes cluster with Calico installed), 
+run the `netshoot` as a deployment using [this deployment](configs/netshoot-calico.yaml). This deployment will use the 
+`kube-system` namespace.
 
 ```
 # Note: This step assumes you loaded UCP client bundle and have kubectl working as expected.
 🐳  → kubectl apply -f netshoot-calico.yaml
 ```
 
-This deployment will deploy a single pod on a master node and automatically load up etcd certs so you can easily start using calicoctl. Now it's time to exec into the pod:
+This deployment will deploy a single pod on a master node and automatically load up etcd certs so you can easily start 
+using calicoctl. Now it's time to exec into the pod:
 
 ```
 🐳  → kubectl get pod --selector=app=netshoot -n kube-system
@@ -122,7 +149,8 @@ NAME                                      READY     STATUS    RESTARTS   AGE
 netshoot-calico-deploy-57b8896459-rzqz4   1/1       Running   0          1h
 ```
 
-Now exec into this pod and use the calicoctl directly without any further configurations! Full documentations on using the calicoctl tool is found [here](https://docs.projectcalico.org/v3.1/reference/calicoctl/commands/).
+Now exec into this pod and use the calicoctl directly without any further configurations! Full documentations on using 
+the calicoctl tool is found [here](https://docs.projectcalico.org/v3.1/reference/calicoctl/commands/).
 
 ```
 🐳  → kubectl exec -it -n kube-system netshoot-calico-deploy-57b8896459-rzqz4 -- /bin/bash -l
@@ -216,7 +244,8 @@ TCP window size: 85.3 KByte (default)
 
 ## tcpdump
 
-**tcpdump** is a powerful and common packet analyzer that runs under the command line. It allows the user to display TCP/IP and other packets being transmitted or received over an attached network interface. 
+**tcpdump** is a powerful and common packet analyzer that runs under the command line. It allows the user to display 
+TCP/IP and other packets being transmitted or received over an attached network interface. 
 
 ```
 # Continuing on the iperf example. Let's launch netshoot with perf-test-a's container network namespace.
@@ -272,7 +301,10 @@ udp        0      0 127.0.0.11:39552        0.0.0.0:*                           
 ```
 
 ##  nmap
-`nmap` ("Network Mapper") is an open source tool for network exploration and security auditing. It is very useful for scanning to see which ports are open between a given set of hosts. This is a common thing to check for when installing Swarm or UCP because a range of ports is required for cluster communication. The command analyzes the connection pathway between the host where `nmap` is running and the given target address.
+`nmap` ("Network Mapper") is an open source tool for network exploration and security auditing. It is very useful for 
+scanning to see which ports are open between a given set of hosts. This is a common thing to check for when installing 
+Swarm or UCP because a range of ports is required for cluster communication. The command analyzes the connection pathway 
+between the host where `nmap` is running and the given target address.
 
 ```
 🐳  → docker run -it --privileged nicolaka/netshoot nmap -p 12376-12390 -dd 172.31.24.25
@@ -293,7 +325,8 @@ There are several states that ports will be discovered as:
 
 ## iftop
 
-Purpose: iftop does for network usage what top does for CPU usage. It listens to network traffic on a named interface and displays a table of current bandwidth usage by pairs of hosts.
+Purpose: iftop does for network usage what top does for CPU usage. It listens to network traffic on a named interface 
+and displays a table of current bandwidth usage by pairs of hosts.
 
 Continuing the `iperf` example.
 
@@ -352,7 +385,9 @@ perf-test-b.	600	IN	A	10.0.3.4 <<<<<<<<<<<<<<<<<<<<<<<<<< Service VIP
 
 ## netcat
 
-Purpose: a simple Unix utility that reads and writes data across network connections, using the TCP or UDP protocol. It's useful for testing and troubleshooting TCP/UDP connections. If there's a firewall rule blocking certain ports, `netcat` can be used to detect
+Purpose: a simple Unix utility that reads and writes data across network connections, using the TCP or UDP protocol. 
+It's useful for testing and troubleshooting TCP/UDP connections. If there's a firewall rule blocking certain ports, 
+`netcat` can be used to detect
 
 ```
 🐳  →  docker network create -d overlay my-ovl
@@ -369,7 +404,8 @@ Connection to service-a 8080 port [tcp/http-alt] succeeded!
 
 ```
 ##  netgen
-`netgen` is a simple [script](netgen.sh) that will generate a packet of data between containers periodically using `netcat`. It's purpose is to use the generated traffic to demonstrate different features of the networking stack.
+`netgen` is a simple [script](netgen.sh) that will generate a packet of data between containers periodically using 
+`netcat`. It's purpose is to use the generated traffic to demonstrate different features of the networking stack.
 
 
 `netgen <host> <ip>` will create a `netcat` server and client listening and sending to the same port.
@@ -446,12 +482,19 @@ More info on `iproute2` [here](http://lartc.org/howto/lartc.iproute2.tour.html)
 
 ## nsenter
 
-Purpose: `nsenter` is a powerful tool allowing you to enter into any namespaces. `nsenter` is available inside `netshoot` but requires `netshoot` to be run as a privileged container. Additionally, you may want to mount the `/var/run/docker/netns` directory to be able to enter any network namespace including bridge and overlay networks. 
+Purpose: `nsenter` is a powerful tool allowing you to enter into any namespaces. `nsenter` is available inside 
+`netshoot` but requires `netshoot` to be run as a privileged container. Additionally, you may want to mount the 
+`/var/run/docker/netns` directory to be able to enter any network namespace including bridge and overlay networks. 
 
 
-With `docker run --name container-B --net container:container-A `, docker uses `container-A`'s network namespace ( including interfaces and routes) when creating `container-B`. This approach is helpful for troubleshooting network issues at the container level. To troubleshoot network issues at the bridge or overlay network level, you need to enter the `namespace` of the network _itself_. `nsenter` allows you to do that. 
+With `docker run --name container-B --net container:container-A `, docker uses `container-A`'s network namespace 
+( including interfaces and routes) when creating `container-B`. This approach is helpful for troubleshooting network 
+issues at the container level. To troubleshoot network issues at the bridge or overlay network level, you need to enter 
+the `namespace` of the network _itself_. `nsenter` allows you to do that. 
 
-For example, if we wanted to check the L2 forwarding table for a overlay network. We need to enter the overlay network namespace and use same tools in `netshoot` to check these entries.  The following examples go over some use cases for using `nsenter` to understand what's happening within a docker network ( overlay in this case).
+For example, if we wanted to check the L2 forwarding table for a overlay network. We need to enter the overlay network 
+namespace and use same tools in `netshoot` to check these entries.  The following examples go over some use cases for 
+using `nsenter` to understand what's happening within a docker network ( overlay in this case).
 
 ```
 # Creating an overlay network
@@ -634,7 +677,9 @@ br0		8000.0215b8e7deb3	no		vxlan1
 
 ## CTOP
 
-ctop is a free open source, simple and cross-platform top-like command-line tool for monitoring container metrics in real-time. It allows you to get an overview of metrics concerning CPU, memory, network, I/O for multiple containers and also supports inspection of a specific container.
+ctop is a free open source, simple and cross-platform top-like command-line tool for monitoring container metrics in 
+real-time. It allows you to get an overview of metrics concerning CPU, memory, network, I/O for multiple containers 
+and also supports inspection of a specific container.
 
 To get data into ctop, you'll need to bind docker.sock into the netshoot container.
 
